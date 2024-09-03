@@ -1,6 +1,6 @@
 # Criando Sistema Bancário - Desafio DIO_NTT Data
 #Autor: Janderson Diniz
-#GitHub: https://github.com/Jandersondiniz
+#https://github.com/Jandersondiniz/Data-Enginer-com-Python---NTT-Data_DIO.git
 
 def depositar(saldo, extrato): #defini a função depositar
     valor = input("Informe o valor do depósito: ")
