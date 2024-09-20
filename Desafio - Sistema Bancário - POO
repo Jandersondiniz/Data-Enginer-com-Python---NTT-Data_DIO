@@ -1,0 +1,191 @@
+from abc import ABC, abstractmethod  # Importa a classe base abstrata e métodos abstratos
+from datetime import datetime  # Importa o módulo para manipular datas e horas
+
+
+# Define a classe Cliente, que armazena informações básicas do cliente, como o endereço e suas contas
+class Cliente:
+    def __init__(self, endereco):
+        self.endereco = endereco  # Armazena o endereço do cliente
+        self.contas = []  # Lista para armazenar as contas do cliente
+
+    # Método para realizar uma transação associada a uma conta específica
+    def realizar_transacao(self, conta, transacao):
+        transacao.registrar(conta)  # Chama o método registrar da transação
+
+    # Método para adicionar uma nova conta à lista de contas do cliente
+    def adicionar_conta(self, conta):
+        self.contas.append(conta)
+
+
+# Define a classe PessoaFisica, que herda de Cliente, e adiciona informações específicas de pessoas físicas
+class PessoaFisica(Cliente):
+    def __init__(self, nome, data_nascimento, cpf, endereco):
+        super().__init__(endereco)  # Chama o construtor da classe Cliente
+        self.nome = nome  # Armazena o nome do cliente
+        self.data_nascimento = data_nascimento  # Armazena a data de nascimento
+        self.cpf = cpf  # Armazena o CPF do cliente
+
+
+# Classe que representa uma conta bancária genérica
+class Conta:
+    def __init__(self, numero, cliente):
+        self._saldo = 0  # Inicializa o saldo da conta
+        self._numero = numero  # Armazena o número da conta
+        self._agencia = "0001"  # Define o número da agência
+        self._cliente = cliente  # Associa a conta a um cliente
+        self._historico = Historico()  # Cria um histórico de transações para a conta
+
+    # Método de classe que cria uma nova conta
+    @classmethod
+    def nova_conta(cls, cliente, numero):
+        return cls(numero, cliente)  # Retorna uma nova instância da classe Conta
+
+    # Define o saldo como uma propriedade para leitura
+    @property
+    def saldo(self):
+        return self._saldo
+
+    # Define o número da conta como uma propriedade para leitura
+    @property
+    def numero(self):
+        return self._numero
+
+    # Define a agência como uma propriedade para leitura
+    @property
+    def agencia(self):
+        return self._agencia
+
+    # Define o cliente como uma propriedade para leitura
+    @property
+    def cliente(self):
+        return self._cliente
+
+    # Define o histórico como uma propriedade para leitura
+    @property
+    def historico(self):
+        return self._historico
+
+    # Método para realizar saques
+    def sacar(self, valor):
+        saldo = self.saldo
+        excedeu_saldo = valor > saldo  # Verifica se o valor do saque excede o saldo
+
+        if excedeu_saldo:
+            print("\n@@@ Operação falhou! Você não tem saldo suficiente. @@@")
+        elif valor > 0:
+            self._saldo -= valor  # Deduz o valor do saldo se a operação for válida
+            print("\n=== Saque realizado com sucesso! ===")
+            return True
+        else:
+            print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
+        return False
+
+    # Método para realizar depósitos
+    def depositar(self, valor):
+        if valor > 0:
+            self._saldo += valor  # Adiciona o valor ao saldo da conta
+            print("\n=== Depósito realizado com sucesso! ===")
+        else:
+            print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
+            return False
+        return True
+
+
+# Classe para contas correntes, com limites adicionais de saque
+class ContaCorrente(Conta):
+    def __init__(self, numero, cliente, limite=500, limite_saques=3):
+        super().__init__(numero, cliente)  # Chama o construtor da classe Conta
+        self.limite = limite  # Define o limite máximo para saques
+        self.limite_saques = limite_saques  # Define o número máximo de saques permitidos
+
+    # Sobrescreve o método sacar para incluir limites adicionais
+    def sacar(self, valor):
+        numero_saques = len(
+            [transacao for transacao in self.historico.transacoes if transacao["tipo"] == Saque.__name__]
+        )
+        excedeu_limite = valor > self.limite  # Verifica se o valor excede o limite de saque
+        excedeu_saques = numero_saques >= self.limite_saques  # Verifica se o número de saques excedeu o limite
+
+        if excedeu_limite:
+            print("\n@@@ Operação falhou! O valor do saque excede o limite. @@@")
+        elif excedeu_saques:
+            print("\n@@@ Operação falhou! Número máximo de saques excedido. @@@")
+        else:
+            return super().sacar(valor)  # Realiza o saque usando o método da classe pai
+
+        return False
+
+    # Método para retornar informações da conta corrente em formato string
+    def __str__(self):
+        return f"""\  
+        Agência:\t{self.agencia}  
+        C/C:\t\t{self.numero}  
+        Titular:\t{self.cliente.nome}  
+        """
+
+
+# Classe para registrar o histórico de transações de uma conta
+class Historico:
+    def __init__(self):
+        self._transacoes = []  # Inicializa uma lista vazia para armazenar transações
+
+    # Propriedade que retorna a lista de transações
+    @property
+    def transacoes(self):
+        return self._transacoes
+
+    # Método para adicionar uma nova transação ao histórico
+    def adicionar_transacao(self, transacao):
+        self._transacoes.append(
+            {
+                "tipo": transacao.__class__.__name__,  # Armazena o tipo de transação (classe)
+                "valor": transacao.valor,  # Armazena o valor da transação
+                "data": datetime.now().strftime("%d-%m-%Y %H:%M:%S"),  # Armazena a data/hora da transação
+            }
+        )
+
+
+# Classe abstrata que define a estrutura básica para transações
+class Transacao(ABC):
+    @property
+    @abstractmethod
+    def valor(self):
+        pass  # Propriedade abstrata que força as subclasses a implementar
+
+    @abstractmethod
+    def registrar(self, conta):
+        pass  # Método abstrato que força as subclasses a implementar
+
+
+# Classe que representa a operação de saque, herdando de Transacao
+class Saque(Transacao):
+    def __init__(self, valor):
+        self._valor = valor  # Armazena o valor do saque
+
+    @property
+    def valor(self):
+        return self._valor  # Retorna o valor do saque
+
+    # Registra a operação de saque na conta
+    def registrar(self, conta):
+        sucesso_transacao = conta.sacar(self.valor)
+
+        if sucesso_transacao:
+            conta.historico.adicionar_transacao(self)  # Adiciona a transação ao histórico se bem-sucedida
+
+
+# Classe que representa a operação de depósito, herdando de Transacao
+class Deposito(Transacao):
+    def __init__(self, valor):
+        self._valor = valor  # Armazena o valor do depósito
+
+    @property
+    def valor(self):
+        return self._valor  # Retorna o valor do depósito
+
+    # Registra a operação de depósito na conta
+    def registrar(self, conta):
+        sucesso_transacao = conta.depositar(self.valor)
+
+        if sucesso_transacao:
+            conta.historico.adicionar_transacao(self)  # Adiciona a transação ao histórico se bem-sucedida
