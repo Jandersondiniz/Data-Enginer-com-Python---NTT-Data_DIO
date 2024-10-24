@@ -1,1 +1,76 @@
 
+CREATE DATABASE universidade1;
+
+CREATE TABLE Departamento (
+    idDepartamento SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    professor_coordenador INT
+);
+CREATE TABLE Professor (
+    idProfessor SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    departamento_id INT,
+    CONSTRAINT fk_departamento FOREIGN KEY (departamento_id) REFERENCES Departamento(idDepartamento)
+);
+CREATE TABLE Curso (
+    idCurso SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    departamento_id INT,
+    CONSTRAINT fk_departamento_curso FOREIGN KEY (departamento_id) REFERENCES Departamento(idDepartamento)
+);
+CREATE TABLE Disciplina (
+    idDisciplina SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    carga_horaria INT
+);
+CREATE TABLE Data (
+    idData SERIAL PRIMARY KEY,
+    data_completa DATE,
+    ano INT,
+    mes INT,
+    dia INT
+);
+CREATE TABLE Fato_Professor (
+    idProfessor INT,
+    idDepartamento INT,
+    idCurso INT,
+    idDisciplina INT,
+    idData_Oferta_Curso INT,
+    num_cursos_ministrados INT,
+    FOREIGN KEY (idProfessor) REFERENCES Professor(idProfessor),
+    FOREIGN KEY (idDepartamento) REFERENCES Departamento(idDepartamento),
+    FOREIGN KEY (idCurso) REFERENCES Curso(idCurso),
+    FOREIGN KEY (idDisciplina) REFERENCES Disciplina(idDisciplina),
+    FOREIGN KEY (idData_Oferta_Curso) REFERENCES Data(idData)
+);
+
+INSERT INTO Departamento (nome, professor_coordenador)
+VALUES ('Matemática', 1), ('Física', 2);
+
+INSERT INTO Professor (nome, departamento_id)
+VALUES ('João Silva', 1), ('Maria Souza', 2);
+
+INSERT INTO Curso (nome, departamento_id)
+VALUES ('Cálculo', 1), ('Mecânica', 2);
+
+INSERT INTO Disciplina (nome, carga_horaria)
+VALUES ('Álgebra Linear', 60), ('Termodinâmica', 80);
+
+INSERT INTO Data (data_completa, ano, mes, dia)
+VALUES ('2023-01-10', 2023, 1, 10), ('2023-02-15', 2023, 2, 15);
+
+INSERT INTO Fato_Professor (idProfessor, idDepartamento, idCurso, idDisciplina, idData_Oferta_Curso, num_cursos_ministrados)
+VALUES (1, 1, 1, 1, 1, 3), (2, 2, 2, 2, 2, 2);
+
+
+SELECT * FROM Professor;
+SELECT * FROM Fato_Professor;
+
+SELECT * FROM Departamento;
+SELECT * FROM Fato_Departamento;
+
+SELECT * FROM Curso;
+SELECT * FROM Fato_Curso;
+
+SELECT * FROM Disciplina;
+SELECT * FROM Fato_Disciplina;
